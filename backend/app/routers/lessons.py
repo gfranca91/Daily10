@@ -1,7 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.services.demo_user import get_demo_user_id
+from app.services.auth import get_current_user_id
 from app.services.progress_repository import assign_daily_lesson, get_today_lesson_word_ids
 from app.services.words_repository import get_unseen_words, get_words_by_ids
 
@@ -18,11 +18,9 @@ class LessonWord(BaseModel):
 
 
 @router.get("/today", response_model=list[LessonWord])
-def today_lesson():
+def today_lesson(user_id: int = Depends(get_current_user_id)):
     """Lição de hoje: até 10 palavras novas (nunca vistas), com tradução e frase de contexto.
     Idempotente — recarregar no mesmo dia devolve as mesmas palavras."""
-    user_id = get_demo_user_id()
-
     today_ids = get_today_lesson_word_ids(user_id)
     if not today_ids:
         new_words = get_unseen_words(user_id, WORDS_PER_LESSON)

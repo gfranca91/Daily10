@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "../api";
 
 export default function PracticeExercise() {
   const [exercises, setExercises] = useState(null);
@@ -11,7 +10,7 @@ export default function PracticeExercise() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`${API_URL}/practice/today`)
+    apiFetch("/practice/today")
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled) setExercises(data);
@@ -59,9 +58,8 @@ export default function PracticeExercise() {
 
   async function handleOptionClick(option) {
     if (feedback) return;
-    const res = await fetch(`${API_URL}/practice/check`, {
+    const res = await apiFetch("/practice/check", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sentence_id: exercise.sentence_id, option_word_id: option.word_id }),
     });
     const result = await res.json();

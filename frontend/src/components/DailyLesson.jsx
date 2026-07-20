@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { apiFetch } from "../api";
 
 export default function DailyLesson() {
   const [words, setWords] = useState(null);
@@ -8,10 +7,18 @@ export default function DailyLesson() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/lessons/today`)
+    let cancelled = false;
+    apiFetch("/lessons/today")
       .then((res) => res.json())
-      .then(setWords)
-      .catch(() => setError("Não foi possível carregar a lição de hoje. O backend está rodando?"));
+      .then((data) => {
+        if (!cancelled) setWords(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError("Não foi possível carregar a lição de hoje. O backend está rodando?");
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (error) {

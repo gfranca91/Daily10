@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "../api";
 
-const API_URL = import.meta.env.VITE_API_URL;
 const MAX_CONSECUTIVE_WRONG = 3;
 
 export default function LevelingTest() {
@@ -15,7 +15,7 @@ export default function LevelingTest() {
   const [status, setStatus] = useState("loading"); // loading | testing | done | error
 
   async function fetchNextWord(excludeIds) {
-    const res = await fetch(`${API_URL}/leveling/next-word?exclude=${excludeIds.join(",")}`);
+    const res = await apiFetch(`/leveling/next-word?exclude=${excludeIds.join(",")}`);
     const word = await res.json();
     if (word === null) {
       setStatus("done");
@@ -64,9 +64,8 @@ export default function LevelingTest() {
       return;
     }
 
-    const res = await fetch(`${API_URL}/leveling/check`, {
+    const res = await apiFetch("/leveling/check", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ word_id: currentWord.id, answer }),
     });
     const result = await res.json();

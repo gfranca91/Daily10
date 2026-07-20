@@ -64,6 +64,18 @@
   color: #dc2626;
 }
 
+.link-button {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .lesson-translation {
   font-size: 1.3rem;
   color: #2563eb;
