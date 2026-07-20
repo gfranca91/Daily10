@@ -96,13 +96,14 @@
 
 .nav-tabs button {
   flex: 1;
-  font-size: 1rem;
-  padding: 0.6rem;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.3rem;
   border-radius: 8px;
   border: 1px solid #2563eb;
   background: white;
   color: #2563eb;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-tabs button.active {

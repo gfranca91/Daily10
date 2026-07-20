@@ -7,9 +7,9 @@ import { clearToken, getToken } from "./api";
 import "./App.css";
 
 const TABS = {
-  lesson: { label: "Lição de hoje", Component: DailyLesson },
+  lesson: { label: "Hoje", Component: DailyLesson },
   practice: { label: "Exercícios", Component: PracticeExercise },
-  leveling: { label: "Nivelamento", Component: LevelingTest },
+  leveling: { label: "Nível", Component: LevelingTest },
 };
 
 export default function App() {
