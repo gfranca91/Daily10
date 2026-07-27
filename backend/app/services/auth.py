@@ -65,6 +65,16 @@ def get_user_state(user_id: int) -> dict | None:
         return dict(row) if row else None
 
 
+def set_declared_level(user_id: int, declared_level: str) -> None:
+    """Pra contas criadas antes do sistema de níveis existir (sem declared_level ainda)."""
+    with SessionLocal() as db:
+        db.execute(
+            text("UPDATE users SET declared_level = :level WHERE id = :user_id"),
+            {"level": declared_level, "user_id": user_id},
+        )
+        db.commit()
+
+
 def complete_placement(user_id: int, confirmed_level: str) -> None:
     with SessionLocal() as db:
         db.execute(

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PlacementTest from "./components/PlacementTest";
 import DailyFlow from "./components/DailyFlow";
 import Auth from "./components/Auth";
+import ChooseLevel from "./components/ChooseLevel";
 import { apiFetch, clearToken, getToken } from "./api";
 import "./App.css";
 
@@ -54,7 +55,9 @@ export default function App() {
     <main className="app">
       <h1>Daily10</h1>
 
-      {!userState.placement_test_done ? (
+      {!userState.declared_level ? (
+        <ChooseLevel onDone={(level) => setUserState({ ...userState, declared_level: level })} />
+      ) : !userState.placement_test_done ? (
         <PlacementTest
           declaredLevel={userState.declared_level}
           onFinished={(confirmedLevel) =>

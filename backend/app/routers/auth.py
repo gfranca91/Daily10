@@ -9,6 +9,7 @@ from app.services.auth import (
     get_current_user_id,
     get_user_by_email,
     get_user_state,
+    set_declared_level,
     verify_password,
 )
 
@@ -34,9 +35,13 @@ class AuthResponse(BaseModel):
 
 
 class UserState(BaseModel):
-    declared_level: CefrLevel
-    current_level: CefrLevel
+    declared_level: CefrLevel | None
+    current_level: CefrLevel | None
     placement_test_done: bool
+
+
+class SetDeclaredLevelRequest(BaseModel):
+    declared_level: CefrLevel
 
 
 @router.post("/signup", response_model=AuthResponse)
@@ -66,3 +71,10 @@ def me(user_id: int = Depends(get_current_user_id)):
     if state is None:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return UserState(**state)
+
+
+@router.post("/declared-level")
+def declared_level(payload: SetDeclaredLevelRequest, user_id: int = Depends(get_current_user_id)):
+    """Pra contas criadas antes do sistema de níveis existir (declared_level ainda nulo)."""
+    set_declared_level(user_id, payload.declared_level)
+    return {"status": "ok"}
