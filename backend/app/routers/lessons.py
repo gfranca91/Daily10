@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app.services.auth import get_current_user_id
+from app.services.auth import get_current_user_id, get_user_state
 from app.services.progress_repository import assign_daily_lesson, get_today_lesson_word_ids
 from app.services.words_repository import get_unseen_words, get_words_by_ids
 
@@ -23,7 +23,10 @@ def today_lesson(user_id: int = Depends(get_current_user_id)):
     Idempotente — recarregar no mesmo dia devolve as mesmas palavras."""
     today_ids = get_today_lesson_word_ids(user_id)
     if not today_ids:
-        new_words = get_unseen_words(user_id, WORDS_PER_LESSON)
+        state = get_user_state(user_id)
+        if state is None or not state["placement_test_done"]:
+            raise HTTPException(status_code=409, detail="Faça o teste de nivelamento antes de começar as lições")
+        new_words = get_unseen_words(user_id, WORDS_PER_LESSON, state["current_level"])
         assign_daily_lesson(user_id, [w["id"] for w in new_words])
         words = new_words
     else:

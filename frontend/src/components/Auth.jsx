@@ -2,11 +2,13 @@ import { useState } from "react";
 import { setToken } from "../api";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export default function Auth({ onAuthenticated }) {
   const [mode, setMode] = useState("login"); // login | signup
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [declaredLevel, setDeclaredLevel] = useState("A1");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,10 +18,11 @@ export default function Auth({ onAuthenticated }) {
     setLoading(true);
 
     try {
+      const body = mode === "signup" ? { email, password, declared_level: declaredLevel } : { email, password };
       const res = await fetch(`${API_URL}/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
@@ -56,6 +59,26 @@ export default function Auth({ onAuthenticated }) {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
+
+        {mode === "signup" && (
+          <div className="level-picker">
+            <p className="level-picker-label">Qual é o seu nível em espanhol?</p>
+            <div className="level-options">
+              {LEVELS.map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  className={level === declaredLevel ? "level-option active" : "level-option"}
+                  onClick={() => setDeclaredLevel(level)}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+            <p className="level-picker-hint">Não se preocupe em acertar — você vai fazer um teste rápido depois pra confirmar.</p>
+          </div>
+        )}
+
         <button type="submit" className="primary-button" disabled={loading}>
           {mode === "login" ? "Entrar" : "Criar conta"}
         </button>

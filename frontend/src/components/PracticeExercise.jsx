@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api";
 
-export default function PracticeExercise() {
+export default function PracticeExercise({ endpoint, label, onComplete }) {
   const [exercises, setExercises] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [feedback, setFeedback] = useState(null);
@@ -10,7 +10,7 @@ export default function PracticeExercise() {
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch("/practice/today")
+    apiFetch(endpoint)
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled) setExercises(data);
@@ -21,7 +21,15 @@ export default function PracticeExercise() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [endpoint]);
+
+  const isDone = exercises !== null && currentIndex >= exercises.length;
+
+  useEffect(() => {
+    if (isDone) {
+      onComplete();
+    }
+  }, [isDone]);
 
   if (error) {
     return <p className="leveling-error">{error}</p>;
@@ -31,26 +39,8 @@ export default function PracticeExercise() {
     return <p>Carregando...</p>;
   }
 
-  if (exercises.length === 0) {
-    return (
-      <div className="leveling-card">
-        <h2>Sem exercícios ainda</h2>
-        <p>As palavras da lição de hoje ainda não têm frase de exercício cadastrada.</p>
-      </div>
-    );
-  }
-
-  const isDone = currentIndex >= exercises.length;
-
   if (isDone) {
-    return (
-      <div className="leveling-card">
-        <h2>Exercícios concluídos</h2>
-        <p>
-          Você acertou {correctCount} de {exercises.length}.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   const exercise = exercises[currentIndex];
@@ -76,6 +66,7 @@ export default function PracticeExercise() {
 
   return (
     <div className="leveling-card">
+      {label && <p className="phase-label">{label}</p>}
       <p className="leveling-progress">
         {currentIndex + 1} / {exercises.length}
       </p>

@@ -88,27 +88,51 @@
   margin: 0 0 1.5rem;
 }
 
-.nav-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
+.level-picker {
+  text-align: left;
+  margin-top: 0.25rem;
 }
 
-.nav-tabs button {
-  flex: 1;
+.level-picker-label {
   font-size: 0.95rem;
-  padding: 0.6rem 0.3rem;
+  color: #333;
+  margin: 0 0 0.5rem;
+}
+
+.level-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.level-option {
+  font-size: 1rem;
+  padding: 0.6rem;
   border-radius: 8px;
   border: 1px solid #2563eb;
   background: white;
   color: #2563eb;
   cursor: pointer;
-  white-space: nowrap;
 }
 
-.nav-tabs button.active {
+.level-option.active {
   background: #2563eb;
   color: white;
+}
+
+.level-picker-hint {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0.5rem 0 0;
+}
+
+.phase-label {
+  color: #2563eb;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 0.75rem;
 }
 
 .practice-sentence {

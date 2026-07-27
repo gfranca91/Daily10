@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../api";
 
-export default function DailyLesson() {
+export default function DailyLesson({ onComplete }) {
   const [words, setWords] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState(null);
@@ -21,6 +21,14 @@ export default function DailyLesson() {
     };
   }, []);
 
+  const isDone = words !== null && currentIndex >= words.length;
+
+  useEffect(() => {
+    if (isDone) {
+      onComplete();
+    }
+  }, [isDone]);
+
   if (error) {
     return <p className="leveling-error">{error}</p>;
   }
@@ -29,30 +37,15 @@ export default function DailyLesson() {
     return <p>Carregando...</p>;
   }
 
-  if (words.length === 0) {
-    return (
-      <div className="leveling-card">
-        <h2>Sem palavras novas</h2>
-        <p>Você já viu todo o vocabulário disponível por enquanto.</p>
-      </div>
-    );
-  }
-
-  const isDone = currentIndex >= words.length;
-
   if (isDone) {
-    return (
-      <div className="leveling-card">
-        <h2>Lição de hoje concluída</h2>
-        <p>Você aprendeu {words.length} palavras novas.</p>
-      </div>
-    );
+    return null;
   }
 
   const currentWord = words[currentIndex];
 
   return (
     <div className="leveling-card">
+      <p className="phase-label">Lição de hoje</p>
       <p className="leveling-progress">
         {currentIndex + 1} / {words.length}
       </p>

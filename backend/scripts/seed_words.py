@@ -10,13 +10,14 @@ from pathlib import Path
 from sqlalchemy import text
 
 from app.db import engine
+from app.services.cefr import level_for_rank
 
 SEED_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "seed_words_es.json"
 
 INSERT_SQL = text(
     """
-    INSERT INTO words (language_code, term, translation_pt, example_sentence, frequency_rank)
-    VALUES (:language_code, :term, :translation_pt, :example_sentence, :frequency_rank)
+    INSERT INTO words (language_code, term, translation_pt, example_sentence, frequency_rank, cefr_level)
+    VALUES (:language_code, :term, :translation_pt, :example_sentence, :frequency_rank, :cefr_level)
     ON CONFLICT (language_code, term) DO NOTHING
     """
 )
@@ -34,6 +35,7 @@ if __name__ == "__main__":
                     "translation_pt": word["translation_pt"],
                     "example_sentence": word["example_sentence"],
                     "frequency_rank": word["frequency_rank"],
+                    "cefr_level": level_for_rank(word["frequency_rank"]),
                 },
             )
 

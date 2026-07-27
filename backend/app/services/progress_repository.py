@@ -1,7 +1,6 @@
 from sqlalchemy import text
 
 from app.db import SessionLocal
-from app.services.srs import apply_sm2
 
 
 def mark_known_at_onboarding(user_id: int, word_id: int) -> None:
@@ -57,9 +56,10 @@ def assign_daily_lesson(user_id: int, word_ids: list[int]) -> None:
         db.commit()
 
 
-def get_due_word_ids(user_id: int) -> list[int]:
-    """Palavras com revisão devida hoje (novas de hoje ou agendadas pelo SM-2), ordenadas
-    pela mais atrasada primeiro. Exclui palavras marcadas conhecidas no nivelamento."""
+def get_review_due_word_ids(user_id: int) -> list[int]:
+    """Palavras de dias anteriores com revisão devida hoje (SM-2) — exclui a lição de HOJE,
+    que tem sua própria fase de exercício separada. Cobre tanto quem já foi revisado antes
+    (status='review') quanto quem ficou sem revisar num dia anterior (status='learning' atrasado)."""
     with SessionLocal() as db:
         rows = db.execute(
             text(
@@ -68,6 +68,7 @@ def get_due_word_ids(user_id: int) -> list[int]:
                 WHERE user_id = :user_id
                 AND status IN ('learning', 'review')
                 AND due_date <= CURRENT_DATE
+                AND created_at::date < CURRENT_DATE
                 ORDER BY due_date
                 """
             ),
@@ -76,49 +77,3 @@ def get_due_word_ids(user_id: int) -> list[int]:
         return [row[0] for row in rows]
 
 
-def record_review(user_id: int, word_id: int, correct: bool) -> None:
-    """Aplica o SM-2 depois de uma resposta no exercício de fixação/revisão."""
-    with SessionLocal() as db:
-        row = db.execute(
-            text(
-                """
-                SELECT repetitions, easiness_factor, interval_days
-                FROM user_word_progress
-                WHERE user_id = :user_id AND word_id = :word_id
-                """
-            ),
-            {"user_id": user_id, "word_id": word_id},
-        ).first()
-        if row is None:
-            return
-
-        result = apply_sm2(
-            repetitions=row[0],
-            easiness_factor=float(row[1]),
-            interval_days=row[2],
-            correct=correct,
-        )
-
-        db.execute(
-            text(
-                """
-                UPDATE user_word_progress
-                SET status = 'review',
-                    repetitions = :repetitions,
-                    easiness_factor = :easiness_factor,
-                    interval_days = :interval_days,
-                    due_date = :due_date,
-                    last_reviewed_at = now()
-                WHERE user_id = :user_id AND word_id = :word_id
-                """
-            ),
-            {
-                "user_id": user_id,
-                "word_id": word_id,
-                "repetitions": result["repetitions"],
-                "easiness_factor": result["easiness_factor"],
-                "interval_days": result["interval_days"],
-                "due_date": result["due_date"],
-            },
-        )
-        db.commit()

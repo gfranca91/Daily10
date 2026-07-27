@@ -38,14 +38,45 @@ def get_user_by_email(email: str) -> dict | None:
         return dict(row) if row else None
 
 
-def create_user(email: str, password: str) -> int:
+def create_user(email: str, password: str, declared_level: str) -> int:
     with SessionLocal() as db:
         result = db.execute(
-            text("INSERT INTO users (email, password_hash) VALUES (:email, :password_hash) RETURNING id"),
-            {"email": email, "password_hash": hash_password(password)},
+            text(
+                """
+                INSERT INTO users (email, password_hash, declared_level, current_level)
+                VALUES (:email, :password_hash, :declared_level, :declared_level)
+                RETURNING id
+                """
+            ),
+            {"email": email, "password_hash": hash_password(password), "declared_level": declared_level},
         )
         db.commit()
         return result.scalar()
+
+
+def get_user_state(user_id: int) -> dict | None:
+    with SessionLocal() as db:
+        row = db.execute(
+            text(
+                "SELECT declared_level, current_level, placement_test_done FROM users WHERE id = :user_id"
+            ),
+            {"user_id": user_id},
+        ).mappings().first()
+        return dict(row) if row else None
+
+
+def complete_placement(user_id: int, confirmed_level: str) -> None:
+    with SessionLocal() as db:
+        db.execute(
+            text(
+                """
+                UPDATE users SET current_level = :level, placement_test_done = true
+                WHERE id = :user_id
+                """
+            ),
+            {"level": confirmed_level, "user_id": user_id},
+        )
+        db.commit()
 
 
 def get_current_user_id(authorization: str | None = Header(default=None)) -> int:

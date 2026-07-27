@@ -1,6 +1,7 @@
 from sqlalchemy import text
 
 from app.db import SessionLocal
+from app.services.srs import apply_sm2
 
 
 def get_practice_exercises_for_words(word_ids: list[int]) -> list[dict]:
@@ -41,9 +42,11 @@ def get_practice_exercises_for_words(word_ids: list[int]) -> list[dict]:
     return list(exercises_by_sentence.values())
 
 
-def check_practice_answer(sentence_id: int, option_word_id: int) -> dict | None:
+def check_practice_answer(user_id: int, sentence_id: int, option_word_id: int) -> dict | None:
+    """Confere a resposta E já aplica o SM-2, tudo numa única conexão/transação
+    (antes eram 3 idas ao banco separadas — cada uma paga a latência até o Neon)."""
     with SessionLocal() as db:
-        row = db.execute(
+        option_row = db.execute(
             text(
                 """
                 SELECT po.is_correct, correct_word.term AS correct_term, ps.word_id
@@ -55,4 +58,50 @@ def check_practice_answer(sentence_id: int, option_word_id: int) -> dict | None:
             ),
             {"sentence_id": sentence_id, "option_word_id": option_word_id},
         ).mappings().first()
-        return dict(row) if row else None
+
+        if option_row is None:
+            return None
+
+        progress_row = db.execute(
+            text(
+                """
+                SELECT repetitions, easiness_factor, interval_days
+                FROM user_word_progress
+                WHERE user_id = :user_id AND word_id = :word_id
+                """
+            ),
+            {"user_id": user_id, "word_id": option_row["word_id"]},
+        ).first()
+
+        if progress_row is not None:
+            result = apply_sm2(
+                repetitions=progress_row[0],
+                easiness_factor=float(progress_row[1]),
+                interval_days=progress_row[2],
+                correct=option_row["is_correct"],
+            )
+            db.execute(
+                text(
+                    """
+                    UPDATE user_word_progress
+                    SET status = 'review',
+                        repetitions = :repetitions,
+                        easiness_factor = :easiness_factor,
+                        interval_days = :interval_days,
+                        due_date = :due_date,
+                        last_reviewed_at = now()
+                    WHERE user_id = :user_id AND word_id = :word_id
+                    """
+                ),
+                {
+                    "user_id": user_id,
+                    "word_id": option_row["word_id"],
+                    "repetitions": result["repetitions"],
+                    "easiness_factor": result["easiness_factor"],
+                    "interval_days": result["interval_days"],
+                    "due_date": result["due_date"],
+                },
+            )
+            db.commit()
+
+        return dict(option_row)

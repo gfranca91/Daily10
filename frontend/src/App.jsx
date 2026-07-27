@@ -1,50 +1,69 @@
-import { useState } from "react";
-import LevelingTest from "./components/LevelingTest";
-import DailyLesson from "./components/DailyLesson";
-import PracticeExercise from "./components/PracticeExercise";
+import { useEffect, useState } from "react";
+import PlacementTest from "./components/PlacementTest";
+import DailyFlow from "./components/DailyFlow";
 import Auth from "./components/Auth";
-import { clearToken, getToken } from "./api";
+import { apiFetch, clearToken, getToken } from "./api";
 import "./App.css";
-
-const TABS = {
-  lesson: { label: "Hoje", Component: DailyLesson },
-  practice: { label: "Exercícios", Component: PracticeExercise },
-  leveling: { label: "Nível", Component: LevelingTest },
-};
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(Boolean(getToken()));
-  const [tab, setTab] = useState("lesson");
+  const [userState, setUserState] = useState(null);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    let cancelled = false;
+    apiFetch("/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) setUserState(data);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated]);
+
+  function handleLogout() {
+    clearToken();
+    setAuthenticated(false);
+    setUserState(null);
+  }
 
   if (!authenticated) {
     return (
       <main className="app">
         <h1>Daily10</h1>
-        <Auth onAuthenticated={() => setAuthenticated(true)} />
+        <Auth
+          onAuthenticated={() => {
+            setAuthenticated(true);
+          }}
+        />
       </main>
     );
   }
 
-  function handleLogout() {
-    clearToken();
-    setAuthenticated(false);
+  if (!userState) {
+    return (
+      <main className="app">
+        <h1>Daily10</h1>
+        <p>Carregando...</p>
+      </main>
+    );
   }
-
-  const ActiveComponent = TABS[tab].Component;
 
   return (
     <main className="app">
       <h1>Daily10</h1>
 
-      <nav className="nav-tabs">
-        {Object.entries(TABS).map(([key, { label }]) => (
-          <button key={key} className={tab === key ? "active" : ""} onClick={() => setTab(key)}>
-            {label}
-          </button>
-        ))}
-      </nav>
-
-      <ActiveComponent />
+      {!userState.placement_test_done ? (
+        <PlacementTest
+          declaredLevel={userState.declared_level}
+          onFinished={(confirmedLevel) =>
+            setUserState({ ...userState, current_level: confirmedLevel, placement_test_done: true })
+          }
+        />
+      ) : (
+        <DailyFlow />
+      )}
 
       <button type="button" className="link-button" onClick={handleLogout}>
         Sair
