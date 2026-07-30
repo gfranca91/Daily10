@@ -76,6 +76,16 @@
   text-decoration: underline;
 }
 
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.footer-links .link-button {
+  width: auto;
+}
+
 .lesson-translation {
   font-size: 1.3rem;
   color: #2563eb;
@@ -177,5 +187,30 @@
   border-color: #dc2626;
   background: #fee2e2;
   color: #991b1b;
+}
+
+.cognates-list {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.cognates-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.25rem;
+  border-bottom: 1px solid #eee;
+}
+
+.cognates-term {
+  font-weight: 600;
+}
+
+.cognates-translation {
+  color: #888;
 }
 

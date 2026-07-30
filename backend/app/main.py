@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, lessons, leveling, practice
+from app.routers import auth, lessons, leveling, library, practice
 
 app = FastAPI(title="Daily10 API")
 
@@ -21,6 +21,7 @@ app.include_router(auth.router)
 app.include_router(leveling.router)
 app.include_router(lessons.router)
 app.include_router(practice.router)
+app.include_router(library.router)
 
 
 @app.get("/health")

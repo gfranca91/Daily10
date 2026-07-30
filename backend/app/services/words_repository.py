@@ -32,6 +32,7 @@ def get_unseen_words(user_id: int, limit: int, min_level: str) -> list[dict]:
                     SELECT 1 FROM user_word_progress p
                     WHERE p.word_id = w.id AND p.user_id = :user_id
                 )
+                AND NOT w.is_cognate
                 AND {_LEVEL_RANK_CASE.replace("cefr_level", "w.cefr_level")} >= :min_level_rank
                 ORDER BY {_LEVEL_RANK_CASE.replace("cefr_level", "w.cefr_level")}, w.frequency_rank
                 LIMIT :limit
@@ -45,13 +46,14 @@ def get_unseen_words(user_id: int, limit: int, min_level: str) -> list[dict]:
 def get_next_word_at_level(level: str, exclude_ids: list[int]) -> dict | None:
     """Próxima palavra (menor frequency_rank) de um nível CEFR específico, usada no teste
     de nivelamento adaptativo por nível. Não olha progresso — o teste roda uma vez, antes
-    de qualquer lição."""
+    de qualquer lição. Pula cognatos: são "de graça" e não devem inflar o nível confirmado."""
     with SessionLocal() as db:
         row = db.execute(
             text(
                 f"""
                 SELECT {_SELECT_FIELDS} FROM words w
                 WHERE w.cefr_level = :level
+                AND NOT w.is_cognate
                 AND w.id != ALL(:exclude_ids)
                 ORDER BY w.frequency_rank
                 LIMIT 1
@@ -60,6 +62,16 @@ def get_next_word_at_level(level: str, exclude_ids: list[int]) -> dict | None:
             {"level": level, "exclude_ids": exclude_ids or [0]},
         ).mappings().first()
         return dict(row) if row else None
+
+
+def get_cognates() -> list[dict]:
+    """Palavras muito parecidas com o português (>=90% de similaridade) — não entram nas
+    lições/exercícios/nivelamento, mas ficam disponíveis pra consulta na biblioteca."""
+    with SessionLocal() as db:
+        rows = db.execute(
+            text(f"SELECT {_SELECT_FIELDS} FROM words WHERE is_cognate ORDER BY frequency_rank")
+        ).mappings().all()
+        return [dict(row) for row in rows]
 
 
 def get_words_by_ids(word_ids: list[int]) -> list[dict]:

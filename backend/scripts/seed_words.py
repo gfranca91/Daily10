@@ -11,13 +11,14 @@ from sqlalchemy import text
 
 from app.db import engine
 from app.services.cefr import level_for_rank
+from app.services.cognates import is_cognate
 
 SEED_PATH = Path(__file__).resolve().parent.parent / "app" / "data" / "seed_words_es.json"
 
 INSERT_SQL = text(
     """
-    INSERT INTO words (language_code, term, translation_pt, example_sentence, frequency_rank, cefr_level)
-    VALUES (:language_code, :term, :translation_pt, :example_sentence, :frequency_rank, :cefr_level)
+    INSERT INTO words (language_code, term, translation_pt, example_sentence, frequency_rank, cefr_level, is_cognate)
+    VALUES (:language_code, :term, :translation_pt, :example_sentence, :frequency_rank, :cefr_level, :is_cognate)
     ON CONFLICT (language_code, term) DO NOTHING
     """
 )
@@ -36,6 +37,7 @@ if __name__ == "__main__":
                     "example_sentence": word["example_sentence"],
                     "frequency_rank": word["frequency_rank"],
                     "cefr_level": level_for_rank(word["frequency_rank"]),
+                    "is_cognate": is_cognate(word["term"], word["translation_pt"]),
                 },
             )
 

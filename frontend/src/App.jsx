@@ -3,12 +3,14 @@ import PlacementTest from "./components/PlacementTest";
 import DailyFlow from "./components/DailyFlow";
 import Auth from "./components/Auth";
 import ChooseLevel from "./components/ChooseLevel";
+import CognatesLibrary from "./components/CognatesLibrary";
 import { apiFetch, clearToken, getToken } from "./api";
 import "./App.css";
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(Boolean(getToken()));
   const [userState, setUserState] = useState(null);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   useEffect(() => {
     if (!authenticated) return;
@@ -27,6 +29,7 @@ export default function App() {
     clearToken();
     setAuthenticated(false);
     setUserState(null);
+    setShowLibrary(false);
   }
 
   if (!authenticated) {
@@ -51,11 +54,15 @@ export default function App() {
     );
   }
 
+  const readyForDailyFlow = userState.declared_level && userState.placement_test_done;
+
   return (
     <main className="app">
       <h1>Daily10</h1>
 
-      {!userState.declared_level ? (
+      {showLibrary ? (
+        <CognatesLibrary onBack={() => setShowLibrary(false)} />
+      ) : !userState.declared_level ? (
         <ChooseLevel onDone={(level) => setUserState({ ...userState, declared_level: level })} />
       ) : !userState.placement_test_done ? (
         <PlacementTest
@@ -68,9 +75,16 @@ export default function App() {
         <DailyFlow />
       )}
 
-      <button type="button" className="link-button" onClick={handleLogout}>
-        Sair
-      </button>
+      <div className="footer-links">
+        {readyForDailyFlow && !showLibrary && (
+          <button type="button" className="link-button" onClick={() => setShowLibrary(true)}>
+            Cognatos
+          </button>
+        )}
+        <button type="button" className="link-button" onClick={handleLogout}>
+          Sair
+        </button>
+      </div>
     </main>
   );
 }
